@@ -1,4 +1,4 @@
-# GameBrdige
+# GameBridge
 
 A system designed for multiple games to work together
 
