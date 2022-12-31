@@ -1,40 +1,49 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "title": "Airbridge-convert",
-    "description": "The format to convert sent/recieved items",
+    "description": "The format to convert sent/recieved items/signals",
     "type": "object",
     "properties": {
-        "reciever_id": {
-            "type": "string",
-            "description": "The id of the reciever"
-        },
-        "origin": {
-            "type": "string",
-            "description": "The name of the origin of the items"
-        },
         "items": {
-            "type": "array",
-            "description": "An array of items",
-            "items": {
-                "type": "object",
-                "title": "Item",
-                "description": "A single item",
-                "properties": {
-                    "item_id": {
-                        "type": "string",
-                        "description": "The id of the item"
-                    },
-                    "amount": {
-                        "type": "integer",
-                        "description": "The amount of send items",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
+            "type": "object",
+            "description": "The conversion inf of all items",
+            "properties": {
+                "sent": {
+                    "type": "object",
+                    "description": "The conversion info of all sent items",
+                    "properties": {
+                        "default": {
+                            "type": "object",
+                            "description": "The default conversion of sent items (will be used when no other conversion is applicable)"
+                        }
                     }
+                },
+                "recieved": {
+                    "type": "object",
+                    "description": "The conversion info of all recieved items"
+                },
+                "failed_sent": {
+                    "type": "string",
+                    "description": "What should happen when there was no valid conversion for a sent item",
+                    "enum": [
+                        "anyway",
+                        "reject",
+                        "delete"
+                    ]
+                },
+                "failed_recieved": {
+                    "type":"string",
+                    "description": "What should happen when there was no valid conversion for a reciieved item",
+                    "enum": [
+                        "anyway",
+                        "reject",
+                        "delete"
+                    ]
                 }
             }
         }
     },
     "required": [
-        "reciever_id"
+        "items"
     ]
 }

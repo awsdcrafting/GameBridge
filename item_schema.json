@@ -9,30 +9,56 @@
             "description": "The id of the reciever",
             "pattern": "^.+(?<!default)$"
         },
-        "origin": {
+        "sender": {
             "type": "object",
             "description": "The origin of the items",
             "properties": {
-                "origin_name": {
+                "sender_id": {
                     "type": "string",
-                    "description": "The name of the origin. Per type",
+                    "description": "The id of the sender. Unique per name",
                     "pattern": "^.+(?<!default)$"
                 },
-                "origin_id": {
+                "sender_name": {
                     "type": "string",
-                    "description": "The id of the origin. Unique per name",
+                    "description": "The name of the sender. Per type",
                     "pattern": "^.+(?<!default)$"
                 },
-                "origin_type": {
+                "sender_type": {
                     "type": "string",
-                    "description": "The type of the origin. (mostly the game)",
+                    "description": "The type of the sender. (mostly the game)",
                     "pattern": "^.+(?<!default)$"
                 }
             },
             "required": [
-                "origin_name",
-                "origin_id",
-                "origin_type"
+                "sender_name",
+                "sender_id",
+                "sender_type"
+            ]
+        },
+        "reciever": {
+            "type": "object",
+            "description": "The reciever of the items",
+            "properties": {
+                "reciever_id": {
+                    "type": "string",
+                    "description": "The id of the reciever. Unique per name",
+                    "pattern": "^.+(?<!default)$"
+                },
+                "reciever_name": {
+                    "type": "string",
+                    "description": "The name of the reciever. Per type",
+                    "pattern": "^.+(?<!default)$"
+                },
+                "reciever_type": {
+                    "type": "string",
+                    "description": "The type of the reciever. (mostly the game)",
+                    "pattern": "^.+(?<!default)$"
+                }
+            },
+            "required": [
+                "reciever_name",
+                "reciever_id",
+                "reciever_type"
             ]
         },
         "items": {
