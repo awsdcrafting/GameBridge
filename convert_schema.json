@@ -1,0 +1,40 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Airbridge-convert",
+    "description": "The format to convert sent/recieved items",
+    "type": "object",
+    "properties": {
+        "reciever_id": {
+            "type": "string",
+            "description": "The id of the reciever"
+        },
+        "origin": {
+            "type": "string",
+            "description": "The name of the origin of the items"
+        },
+        "items": {
+            "type": "array",
+            "description": "An array of items",
+            "items": {
+                "type": "object",
+                "title": "Item",
+                "description": "A single item",
+                "properties": {
+                    "item_id": {
+                        "type": "string",
+                        "description": "The id of the item"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "description": "The amount of send items",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "reciever_id"
+    ]
+}

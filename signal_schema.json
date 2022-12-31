@@ -1,0 +1,68 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Airbridge-signal",
+    "description": "The format to send/recieve signals",
+    "type": "object",
+    "properties": {
+        "reciever_id": {
+            "type": "string",
+            "description": "The id of the reciever",
+            "pattern": "^.+(?<!default)$"
+        },
+        "origin": {
+            "type": "object",
+            "description": "The origin of the signals",
+            "properties": {
+                "origin_name": {
+                    "type": "string",
+                    "description": "The name of the origin. Per type",
+                    "pattern": "^.+(?<!default)$"
+                },
+                "origin_id": {
+                    "type": "string",
+                    "description": "The id of the origin. Unique per name",
+                    "pattern": "^.+(?<!default)$"
+                },
+                "origin_type": {
+                    "type": "string",
+                    "description": "The type of the origin. (mostly the game)",
+                    "pattern": "^.+(?<!default)$"
+                }
+            },
+            "required": [
+                "origin_name",
+                "origin_id",
+                "origin_type"
+            ]
+        },
+        "signals": {
+            "type": "array",
+            "description": "An array of signals",
+            "items": {
+                "type": "object",
+                "title": "Item",
+                "description": "A single signal",
+                "properties": {
+                    "signal_id": {
+                        "type": "string",
+                        "description": "The id of the signal",
+                        "pattern": "^.+(?<!default)$"
+                    },
+                    "value": {
+                        "type": "integer",
+                        "description": "The value of the signal"
+                    }
+                },
+                "required": [
+                    "signal_id",
+                    "value"
+                ]
+            }
+        }
+    },
+    "required": [
+        "reciever_id",
+        "origin",
+        "signals"
+    ]
+}

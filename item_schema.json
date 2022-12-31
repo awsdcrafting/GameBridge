@@ -1,0 +1,70 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Airbridge-item",
+    "description": "The format to send/recieve items",
+    "type": "object",
+    "properties": {
+        "reciever_id": {
+            "type": "string",
+            "description": "The id of the reciever",
+            "pattern": "^.+(?<!default)$"
+        },
+        "origin": {
+            "type": "object",
+            "description": "The origin of the items",
+            "properties": {
+                "origin_name": {
+                    "type": "string",
+                    "description": "The name of the origin. Per type",
+                    "pattern": "^.+(?<!default)$"
+                },
+                "origin_id": {
+                    "type": "string",
+                    "description": "The id of the origin. Unique per name",
+                    "pattern": "^.+(?<!default)$"
+                },
+                "origin_type": {
+                    "type": "string",
+                    "description": "The type of the origin. (mostly the game)",
+                    "pattern": "^.+(?<!default)$"
+                }
+            },
+            "required": [
+                "origin_name",
+                "origin_id",
+                "origin_type"
+            ]
+        },
+        "items": {
+            "type": "array",
+            "description": "An array of items",
+            "items": {
+                "type": "object",
+                "title": "Item",
+                "description": "A single item",
+                "properties": {
+                    "item_id": {
+                        "type": "string",
+                        "description": "The id of the item",
+                        "pattern": "^.+(?<!default)$"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "description": "The amount of send items",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                    }
+                },
+                "required": [
+                    "item_id",
+                    "amount"
+                ]
+            }
+        }
+    },
+    "required": [
+        "reciever_id",
+        "origin",
+        "items"
+    ]
+}

@@ -1,0 +1,18 @@
+{
+    "factorio.versions": [
+        {
+            "name": "factorio-latest",
+            "factorioPath": "/media/data/SteamLibrary/steamapps/common/Factorio/bin/x64/factorio",
+            "active": true
+        }
+    ],
+    "Lua.diagnostics.globals": [
+        "commands",
+        "rcon",
+        "script",
+        "game",
+        "settings",
+        "defines",
+        "data"
+    ]
+}
