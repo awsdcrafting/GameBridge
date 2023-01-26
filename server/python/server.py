@@ -264,9 +264,17 @@ def on_message(client, server: Server, msg: mqtt.MQTTMessage):
             obj = json.loads(str(msg.payload))
             path = sub_topic.removeprefix("send/")
             game = server.get_game_by_topic(path)
-            #TODO do items conversion
-            logging.debug(f"TODO: [{msg.topic}]: {msg.payload}")
-            pass
+            if not game:
+                logging.warn(f"Recieved for unknown game: [{msg.topic}]: {msg.payload}")
+                return
+            if "reciever" not in obj:
+                logging.info(f"Invalid send data: [{msg.topic}]: {msg.payload}")
+            
+            if "items" in obj:
+                server.add_items(obj["reciever"], obj["items"], game)
+            if "signals" in obj:
+                # noop as of yet
+                pass
         else:
             logging.debug(f"Unhandled game topic: [{msg.topic}]: {msg.payload}")
 

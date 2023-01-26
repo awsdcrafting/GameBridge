@@ -124,7 +124,6 @@ items is item_id: amount
 ```json
 {
     "sender": ["factorio", "vanilla", "1"],
-    "target": ["test", "server", "1"],
     "reciever": "id of reciever chest",
     "items": {
         "iron-plate": 100,

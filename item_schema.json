@@ -30,7 +30,7 @@
         }
     },
     "required": [
-        "origin",
+        "sender",
         "items"
     ]
 }
