@@ -61,10 +61,12 @@ server responds with 4 topics
 ```json
 {
     "target": ["factorio", "vanilla", "1"],
-    "control_send": "gamebridge/game/control/send/...",
-    "control_recieve": "gamebridge/game/control/recieve/...",
-    "send": "gamebridge/game/send/...",
-    "recieve": "gamebridge/game/recieve/..."
+    "topics": {
+        "control_send": "gamebridge/game/control/send/...",
+        "control_recieve": "gamebridge/game/control/recieve/...",
+        "send": "gamebridge/game/send/...",
+        "recieve": "gamebridge/game/recieve/..."
+    }
 }
 ```
 
@@ -77,11 +79,39 @@ logs out at global control topic with its identification (sender path)
 game sends json to control topic with following infos
 
 -   sender path
+-   type = chest
 -   chest id
 -   item white/black list
 -   nonce
 
+```json
+{
+    "sender": ["factorio", "vanilla", "1"],
+    "type": "chest",
+    "chest_id": "1",
+    "whitelist": [],
+    "blacklist": [],
+    "nonce": ""
+}
+```
+
 server responds with ack?
+
+## Remove Chest
+
+game sends json to control topic with following infos
+
+-   sender path
+-   type = remove_chest
+-   chest id
+
+```json
+{
+    "sender": ["factorio", "vanilla", "1"],
+    "type": "remove_chest",
+    "chest_id": "1"
+}
+```
 
 ## Sending things
 
@@ -90,14 +120,18 @@ items and data can be send
 both fields are optional  
 data is up to the reciever to interpret if at all  
 items is item_id: amount
+
 ```json
 {
     "sender": ["factorio", "vanilla", "1"],
+    "target": ["test", "server", "1"],
     "reciever": "id of reciever chest",
     "items": {
         "iron-plate": 100,
-        "copper-plate": 50,
+        "copper-plate": 50
     },
     "data": {}
 }
 ```
+
+The default game implementations do not use data!

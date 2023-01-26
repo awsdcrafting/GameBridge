@@ -4,62 +4,14 @@
     "description": "The format to send/recieve items",
     "type": "object",
     "properties": {
-        "reciever_id": {
-            "type": "string",
-            "description": "The id of the reciever",
-            "pattern": "^.+(?<!default)$"
-        },
         "sender": {
-            "type": "object",
+            "type": "array",
             "description": "The origin of the items",
-            "properties": {
-                "sender_id": {
-                    "type": "string",
-                    "description": "The id of the sender. Unique per name",
-                    "pattern": "^.+(?<!default)$"
-                },
-                "sender_name": {
-                    "type": "string",
-                    "description": "The name of the sender. Per type",
-                    "pattern": "^.+(?<!default)$"
-                },
-                "sender_type": {
-                    "type": "string",
-                    "description": "The type of the sender. (mostly the game)",
-                    "pattern": "^.+(?<!default)$"
-                }
-            },
-            "required": [
-                "sender_name",
-                "sender_id",
-                "sender_type"
-            ]
-        },
-        "reciever": {
-            "type": "object",
-            "description": "The reciever of the items",
-            "properties": {
-                "reciever_id": {
-                    "type": "string",
-                    "description": "The id of the reciever. Unique per name",
-                    "pattern": "^.+(?<!default)$"
-                },
-                "reciever_name": {
-                    "type": "string",
-                    "description": "The name of the reciever. Per type",
-                    "pattern": "^.+(?<!default)$"
-                },
-                "reciever_type": {
-                    "type": "string",
-                    "description": "The type of the reciever. (mostly the game)",
-                    "pattern": "^.+(?<!default)$"
-                }
-            },
-            "required": [
-                "reciever_name",
-                "reciever_id",
-                "reciever_type"
-            ]
+            "items": {
+                "type": "string",
+                "description": "path",
+                "pattern": "^\\w+((-_)\\w+)*$"
+            }
         },
         "items": {
             "type": "array",
@@ -68,28 +20,16 @@
                 "type": "object",
                 "title": "Item",
                 "description": "A single item",
-                "properties": {
-                    "item_id": {
-                        "type": "string",
-                        "description": "The id of the item",
-                        "pattern": "^.+(?<!default)$"
-                    },
-                    "amount": {
-                        "type": "integer",
-                        "description": "The amount of send items",
-                        "minimum": 0,
-                        "exclusiveMinimum": true
-                    }
-                },
-                "required": [
-                    "item_id",
-                    "amount"
-                ]
+                "additionalProperties": {
+                    "type": "integer",
+                    "description": "The amount of send items",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                }
             }
         }
     },
     "required": [
-        "reciever_id",
         "origin",
         "items"
     ]

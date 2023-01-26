@@ -11,16 +11,57 @@
                 "sent": {
                     "type": "object",
                     "description": "The conversion info of all sent items",
-                    "properties": {
-                        "default": {
-                            "type": "object",
-                            "description": "The default conversion of sent items (will be used when no other conversion is applicable)"
+                    "default": {},
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "input_count": {
+                                "type": "number",
+                                "description": "The amount of items per conversion",
+                                "minimum": 1,
+                                "default": 1
+                            },
+                            "output_name": {
+                                "type": "string",
+                                "description": "The name of the item after the conversion"
+                            },
+                            "output_count": {
+                                "type": "number",
+                                "description": "The amount of items after the conversion",
+                                "minimum": 1,
+                                "default": 1
+                            }
+                        },
+                        "required": [
+                            "output_name"
+                        ]
+                    },
+                    "examples": [
+                        {
+                            "iron-plate": {
+                                "input_count": 100,
+                                "output_name": "iron",
+                                "output_count": 1
+                            },
+                            "copper-plate": {
+                                "input_count": 100,
+                                "output_name": "copper",
+                                "output_count": 1
+                            }
+                        },
+                        {
+                            "coal": {
+                                "input_count": 1,
+                                "output_name": "coal",
+                                "output_count": 1
+                            }
                         }
-                    }
+                    ]
                 },
                 "recieved": {
                     "type": "object",
-                    "description": "The conversion info of all recieved items"
+                    "description": "The conversion info of all recieved items",
+                    "default": {}
                 },
                 "failed_sent": {
                     "type": "string",
@@ -29,16 +70,18 @@
                         "anyway",
                         "reject",
                         "delete"
-                    ]
+                    ],
+                    "default": "anyway"
                 },
                 "failed_recieved": {
-                    "type":"string",
+                    "type": "string",
                     "description": "What should happen when there was no valid conversion for a reciieved item",
                     "enum": [
                         "anyway",
                         "reject",
                         "delete"
-                    ]
+                    ],
+                    "default": "reject"
                 }
             }
         }

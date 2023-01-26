@@ -14,5 +14,6 @@
         "settings",
         "defines",
         "data"
-    ]
+    ],
+    "python.analysis.typeCheckingMode": "basic"
 }

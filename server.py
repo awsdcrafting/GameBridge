@@ -5,6 +5,7 @@ from typing import Dict
 import os
 import json
 import logging
+import math
 
 
 @dataclass
@@ -32,7 +33,6 @@ class Chest():
     whitelist: list[str] = field(default_factory=lambda: [])
     blacklist: list[str] = field(default_factory=lambda: [])
     items: Dict[str, float] = field(default_factory=lambda: {})
-    
 
     def is_valid_item(self, item):
         if self.whitelist and item not in self.whitelist:
@@ -40,9 +40,22 @@ class Chest():
         if self.blacklist and item in self.blacklist:
             return False
         return True
-    
-    def add_items(self, items):
-        pass
+
+    def add_items(self, items: Dict):
+        ret_items = {}
+        rejected_items = {}
+        for item, amount in items.items():
+            if not self.is_valid_item(item):
+                rejected_items[item] = amount
+            if item in self.items:
+                self.items[item] = self.items[item] + amount
+            else:
+                self.items[item] = amount
+            int_amount = math.floor(self.items[item])
+            self.items[item] = self.items[item] - int_amount
+            if int_amount > 0:
+                ret_items[item] = int_amount
+        return (ret_items, rejected_items)
 
 
 @dataclass
@@ -50,8 +63,8 @@ class Game():
     sender: list[str]
     path: str
     topic_prefix: InitVar[str]
-    chests: Dict[str, Chest] = field(default_factory=lambda: {})
-    topics: Dict[str, str] = field(default_factory=lambda: {})
+    chests: Dict[str, Chest] = field(default_factory=lambda: {}, hash=False, compare=False)
+    topics: Dict[str, str] = field(default_factory=lambda: {}, hash=False, compare=False)
 
     def __post_init__(self, topic_prefix):
         self.topics["control_send"] = topic_prefix + "control/send/" + self.path
@@ -67,6 +80,16 @@ class Game():
         if id in self.chests:
             del self.chests[id]
         logging.info("Removed chest with id: {id} from game {self.path}")
+        
+    def add_items(self, id, items: Dict):
+        if id not in self.chests:
+            return {}, items
+        return self.chests[id].add_items(items)
+    
+    def is_valid_item(self, id, item):
+        if id not in self.chests:
+            return False
+        return self.chests[id].is_valid_item(item)
 
 
 @dataclass
@@ -105,7 +128,7 @@ class Server():
         game = self.get_game_by_topic(path)
         if not game:
             return
-        
+
         if "chest_id" not in obj:
             logging.info("Invalid chest: [{path}]: {obj}")
             return
@@ -119,18 +142,76 @@ class Server():
         chest = Chest(chest_id, whitelist, blacklist)
         game.add_chest(chest)
         logging.info(f"Added chest {chest_id} to {path}")
-    
+
     def remove_chest(self, path, obj):
         game = self.get_game_by_topic(path)
         if not game:
             return
-        
+
         if "chest_id" not in obj:
             logging.info("Invalid chest: [{path}]: {obj}")
             return
         chest_id = obj["chest_id"]
         game.remove_chest(chest_id)
         logging.info(f"Removed chest {chest_id} from {path}")
+        
+        
+    def convert_item(self, item, origin: Game, target: Game):
+        bases = [self.conversion]
+        
+        # traverse the origin path
+        for path in origin.sender:
+            if path not in bases[-1]:
+                break
+            bases += bases[-1][path]
+        
+        while bases:
+            current_bases = [bases[-1]]
+            
+            # traverse the target path    
+            for path in target.sender:
+                if path not in current_bases[-1]:
+                    break
+                current_bases += current_bases[-1][path]
+                
+            while current_bases:
+                #if conversion: return it
+                if item in current_bases[-1]:
+                    return current_bases[item]
+                
+                #go up one
+                current_bases = current_bases[:-1]
+            
+            #if not found go up one
+            bases = bases[:-1]
+            
+        #if not found return item
+        return item
+        
+    def add_items(self, id, items, origin: Game):
+        games = [game for game in self.games.values() if id in game.chests]
+        items_per_game = {game: {} for game in games}
+        
+        for item, amount in items:
+            valid_games = []
+            for game in games:
+                converted_item_info = self.convert_item(item, origin, game)
+                if not game.is_valid_item(id, converted_item_info["output_name"]):
+                    continue
+                valid_games += [game]
+                items_per_game[game][item] = {"amount": amount * converted_item_info["output_count"] / converted_item_info["input_count"], "item": converted_item_info["output_name"]}
+
+            for game in valid_games:
+                amount = items_per_game[game][item]["amount"] / len(valid_games)
+                converted = items_per_game[game][item]["item"]
+                del items_per_game[game][item]
+                items_per_game[game][converted] = amount
+            
+        # send items
+        for game, items in items_per_game.items():
+            send_obj = {"sender": origin.sender, "target": game.sender, "reciever": id, "items": items}
+            self.mqtt_client.publish(game.topics["recieve"], json.dumps(send_obj))
+
 
 # The callback for when the client receives a CONNACK response from the server.
 
