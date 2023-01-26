@@ -289,6 +289,8 @@ if __name__ == "__main__":
 
     client = mqtt.Client()
     server = Server(Config(), client)
+    with open('item_conversions.json') as item_conversions_file:
+        server.conversion = json.load(item_conversions_file)
     client.user_data_set(server)
 
     if server.config.mqtt_user:
