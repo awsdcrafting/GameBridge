@@ -133,4 +133,29 @@ items is item_id: amount
 }
 ```
 
+## Recieving things
+server sends json to recieve topic
+items and data can be send
+both fields are optional
+data will just be copied over
+items are converted
+
+example minecraft is on the recieving end
+```json
+{
+    "sender": ["factorio", "vanilla", "1"],
+    "target": ["minecraft", "vanilla", "1"],
+    "reciever": "id of reciever chest",
+    "items": {
+        "iron-ingot": {
+            "amount": 1,
+            "orig-name": "iron-plate",
+            "input_count": 100,
+            "output_count": 1
+        }
+    }
+}
+```
+The extra info (orig-name and input/output count are needed for rejection)
+
 The default game implementations do not use data!
