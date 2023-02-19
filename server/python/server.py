@@ -1,11 +1,12 @@
-from paho.mqtt import client as mqtt
-from dotenv import load_dotenv
-from dataclasses import dataclass, field, InitVar
-from typing import Dict
-import os
 import json
 import logging
 import math
+import os
+from dataclasses import InitVar, dataclass, field
+from typing import Dict
+
+from dotenv import load_dotenv
+from paho.mqtt import client as mqtt
 
 
 @dataclass
@@ -68,9 +69,9 @@ class Game():
 
     def __post_init__(self, topic_prefix):
         self.topics["control_send"] = topic_prefix + "control/send/" + self.path
-        self.topics["control_recieve"] = topic_prefix + "control/recieve/" + self.path
+        self.topics["control_receive"] = topic_prefix + "control/receive/" + self.path
         self.topics["send"] = topic_prefix + "send/" + self.path
-        self.topics["recieve"] = topic_prefix + "recieve/" + self.path
+        self.topics["receive"] = topic_prefix + "receive/" + self.path
 
     def add_chest(self, chest: Chest):
         self.chests[chest.id] = chest
@@ -104,11 +105,11 @@ class Server():
         path = "/".join(sender)
         self.games[path] = game = Game(sender, path, self.config.mqtt_client_topics)
 
-        ret = {"target": sender, "topics": game.topics}
+        ret = {"target": sender, "topics": game.topics, "type": "topics"}
         logging.info(f"Connected game at {path}: {game}")
         #subsrcibe to the send topics
         self.mqtt_client.subscribe([(topic, 0) for topic in game.topics.keys() if "send" in topic])
-        self.mqtt_client.publish(server.config.mqtt_global_control_topics + "recieve", json.dumps(ret))
+        self.mqtt_client.publish(server.config.mqtt_global_control_topics + "receive", json.dumps(ret))
 
     def logout(self, obj):
         sender = obj["sender"]
@@ -186,7 +187,7 @@ class Server():
             bases = bases[:-1]
             
         #if not found return item
-        return item
+        return {"output_item": item}
         
     def add_items(self, id, items, origin: Game):
         games = [game for game in self.games.values() if id in game.chests]
@@ -199,7 +200,7 @@ class Server():
                 if not game.is_valid_item(id, converted_item_info["output_name"]):
                     continue
                 valid_games += [game]
-                items_per_game[game][item] = {"amount": amount * converted_item_info["output_count"] / converted_item_info["input_count"], "item": converted_item_info["output_name"]}
+                items_per_game[game][item] = {"amount": amount * converted_item_info.get("output_count", 1) / converted_item_info.get("input_count"), "item": converted_item_info.get("output_name", item)}
 
             for game in valid_games:
                 amount = items_per_game[game][item]["amount"] / len(valid_games)
@@ -209,8 +210,8 @@ class Server():
             
         # send items
         for game, items in items_per_game.items():
-            send_obj = {"sender": origin.sender, "target": game.sender, "reciever": id, "items": items}
-            self.mqtt_client.publish(game.topics["recieve"], json.dumps(send_obj))
+            send_obj = {"sender": origin.sender, "target": game.sender, "receiver": id, "items": items}
+            self.mqtt_client.publish(game.topics["receive"], json.dumps(send_obj))
 
 
 # The callback for when the client receives a CONNACK response from the server.
@@ -222,6 +223,7 @@ def on_connect(client, userdata, flags, rc):
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     # We subscribe to the global control send topic
+    logging.info(f"Subscribing to {server.config.mqtt_global_control_topics}send")
     client.subscribe(server.config.mqtt_global_control_topics + "send")
 
 
@@ -229,8 +231,10 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, server: Server, msg: mqtt.MQTTMessage):
-    if msg.topic == os.getenv("MQTT_GLOBAL_CONTROL_TOPIC"):
-        obj = json.loads(str(msg.payload))
+    logging.info(f"Received [{msg.topic}]: {msg.payload}")
+    if msg.topic == f"{server.config.mqtt_global_control_topics}send":
+        logging.info(f"payload: {msg.payload.decode('utf-8')}")
+        obj = json.loads(msg.payload.decode("utf-8"))
         if "type" not in obj:
             #wrong object
             logging.info(f"Invalid data: [{msg.topic}]: {msg.payload}")
@@ -249,7 +253,7 @@ def on_message(client, server: Server, msg: mqtt.MQTTMessage):
                 logging.warn(f"Unknown game: {path} with: [{msg.topic}]: {msg.payload}")
                 #request game again, why are we even subscribed to this??
                 return
-            obj = json.loads(str(msg.payload))
+            obj = json.loads(msg.payload.decode("utf-8"))
             #(un)register chest
             if "type" not in obj:
                 #wrong object
@@ -261,17 +265,17 @@ def on_message(client, server: Server, msg: mqtt.MQTTMessage):
                 server.remove_chest(path, obj)
 
         elif sub_topic.startswith("send/"):
-            obj = json.loads(str(msg.payload))
+            obj = json.loads(msg.payload.decode("utf-8"))
             path = sub_topic.removeprefix("send/")
             game = server.get_game_by_topic(path)
             if not game:
-                logging.warn(f"Recieved for unknown game: [{msg.topic}]: {msg.payload}")
+                logging.warn(f"received for unknown game: [{msg.topic}]: {msg.payload}")
                 return
-            if "reciever" not in obj:
+            if "receiver" not in obj:
                 logging.info(f"Invalid send data: [{msg.topic}]: {msg.payload}")
             
             if "items" in obj:
-                server.add_items(obj["reciever"], obj["items"], game)
+                server.add_items(obj["receiver"], obj["items"], game)
             if "signals" in obj:
                 # noop as of yet
                 pass
@@ -285,13 +289,15 @@ def on_message(client, server: Server, msg: mqtt.MQTTMessage):
 
 if __name__ == "__main__":
     load_dotenv()
-    logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", level=logging.DEBUG)
 
     client = mqtt.Client()
     server = Server(Config(), client)
     with open('item_conversions.json') as item_conversions_file:
         server.conversion = json.load(item_conversions_file)
     client.user_data_set(server)
+
+    logging.info(Server)
 
     if server.config.mqtt_user:
         client.username_pw_set(server.config.mqtt_user, server.config.mqtt_pass)

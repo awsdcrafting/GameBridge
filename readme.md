@@ -61,11 +61,12 @@ server responds with 4 topics
 ```json
 {
     "target": ["factorio", "vanilla", "1"],
+    "type": "topics",
     "topics": {
         "control_send": "gamebridge/game/control/send/...",
-        "control_recieve": "gamebridge/game/control/recieve/...",
+        "control_receive": "gamebridge/game/control/recieve/...",
         "send": "gamebridge/game/send/...",
-        "recieve": "gamebridge/game/recieve/..."
+        "receive": "gamebridge/game/recieve/..."
     }
 }
 ```
@@ -73,6 +74,12 @@ server responds with 4 topics
 ## Game disconnected
 
 logs out at global control topic with its identification (sender path)
+```json
+{
+    "sender": ["factorio", "vanilla", "1"],
+    "type": "logout"
+}
+```
 
 ## New Chest / Chest updated
 
@@ -118,13 +125,14 @@ game sends json to control topic with following infos
 game sends json to send topic  
 items and data can be send  
 both fields are optional  
-data is up to the reciever to interpret if at all  
+data is up to the receiver to interpret if at all  
 items is item_id: amount
 
 ```json
 {
     "sender": ["factorio", "vanilla", "1"],
-    "reciever": "id of reciever chest",
+    "receiver": "id of receiver chest",
+    "type": "send",
     "items": {
         "iron-plate": 100,
         "copper-plate": 50

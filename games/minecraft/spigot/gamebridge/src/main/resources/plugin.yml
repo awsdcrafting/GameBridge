@@ -1,0 +1,6 @@
+name: GameBridge
+version: '${version}'
+main: eu.scisneromam.gamebridge.GameBridge
+api-version: 1.19
+libraries:
+  - "net.axay:kspigot:1.19.1"

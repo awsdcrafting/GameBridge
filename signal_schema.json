@@ -4,9 +4,9 @@
     "description": "The format to send/recieve signals",
     "type": "object",
     "properties": {
-        "reciever_id": {
+        "receiver_id": {
             "type": "string",
-            "description": "The id of the reciever",
+            "description": "The id of the receiver",
             "pattern": "^.+(?<!default)$"
         },
         "origin": {
@@ -61,7 +61,7 @@
         }
     },
     "required": [
-        "reciever_id",
+        "receiver_id",
         "origin",
         "signals"
     ]
