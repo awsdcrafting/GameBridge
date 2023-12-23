@@ -455,7 +455,7 @@ poetry.toml
 
 ### VisualStudioCode ###
 .vscode/*
-!.vscode/settings.json
+.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
@@ -631,3 +631,6 @@ gradle-app.setting
 hs_err_pid*
 replay_pid*
 
+games/factorio/gamebridge
+.vscode/settings.json
+games/factorio/.vscode/settings.json

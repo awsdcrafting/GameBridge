@@ -108,7 +108,7 @@ class Server():
         ret = {"target": sender, "topics": game.topics, "type": "topics"}
         logging.info(f"Connected game at {path}: {game}")
         #subsrcibe to the send topics
-        self.mqtt_client.subscribe([(topic, 0) for topic in game.topics.keys() if "send" in topic])
+        self.mqtt_client.subscribe([(topic, 0) for topic_key, topic in game.topics.items() if "send" in topic_key])
         self.mqtt_client.publish(server.config.mqtt_global_control_topics + "receive", json.dumps(ret))
 
     def logout(self, obj):
@@ -128,6 +128,7 @@ class Server():
     def add_chest(self, path, obj):
         game = self.get_game_by_topic(path)
         if not game:
+            logging.info("unknown game: [{path}]: {obj}")
             return
 
         if "chest_id" not in obj:
@@ -192,8 +193,9 @@ class Server():
     def add_items(self, id, items, origin: Game):
         games = [game for game in self.games.values() if id in game.chests]
         items_per_game = {game: {} for game in games}
+        converted_items_per_game = {game: {} for game in games}
         
-        for item, amount in items:
+        for item, amount in items.items():
             valid_games = []
             for game in games:
                 converted_item_info = self.convert_item(item, origin, game)
@@ -206,11 +208,12 @@ class Server():
                 amount = items_per_game[game][item]["amount"] / len(valid_games)
                 converted = items_per_game[game][item]["item"]
                 del items_per_game[game][item]
-                items_per_game[game][converted] = amount
+                converted_items_per_game[game][converted] = amount
             
         # send items
-        for game, items in items_per_game.items():
-            send_obj = {"sender": origin.sender, "target": game.sender, "receiver": id, "items": items}
+        for game, items in converted_items_per_game.items():
+            logging.info("sending {items} to {game}")
+            send_obj = {"sender": origin.sender, "target": game.sender, "receiver": id, "items": items, "type": "send"}
             self.mqtt_client.publish(game.topics["receive"], json.dumps(send_obj))
 
 

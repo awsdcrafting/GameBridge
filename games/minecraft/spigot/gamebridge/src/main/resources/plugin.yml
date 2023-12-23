@@ -1,6 +1,12 @@
 name: GameBridge
 version: '${version}'
 main: eu.scisneromam.gamebridge.GameBridge
-api-version: 1.19
+api-version: 1.20
 libraries:
-  - "net.axay:kspigot:1.19.1"
+  - "net.axay:kspigot:1.20.2"
+  - "org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5"
+  - "org.jetbrains.exposed:exposed-core:0.40.1"
+  - "org.jetbrains.exposed:exposed-dao:0.40.1"
+  - "org.jetbrains.exposed:exposed-jdbc:0.40.1"
+  - "org.xerial:sqlite-jdbc:3.40.1.0"
+  - "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2"

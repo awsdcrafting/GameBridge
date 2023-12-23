@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.8.10'
+    id 'org.jetbrains.kotlin.jvm' version '1.8.22'
     id 'com.github.johnrengelman.shadow' version "7.1.2"
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.8.0'
 }
@@ -21,16 +21,17 @@ repositories {
 }
 
 dependencies {
-    //implementation 'org.jetbrains:kotlin:1.8.10'
-    compileOnly 'io.papermc.paper:paper-api:1.19.3-R0.1-SNAPSHOT'
-    implementation "org.jetbrains.kotlin:kotlin-reflect:1.8.10"
-    implementation 'net.axay:kspigot:1.19.1'
-    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.1'
+    //implementation 'org.jetbrains:kotlin:1.8.22'
+    compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect:1.8.22'
+    implementation 'net.axay:kspigot:1.20.2'
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
     implementation 'org.jetbrains.exposed:exposed-core:0.40.1'
     implementation 'org.jetbrains.exposed:exposed-dao:0.40.1'
     implementation 'org.jetbrains.exposed:exposed-jdbc:0.40.1'
-    implementation 'org.xerial:sqlite-jdbc:3.30.1'
-    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0-RC"
+    implementation 'org.xerial:sqlite-jdbc:3.40.1.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 kotlin {
@@ -66,4 +67,3 @@ processResources {
         expand props
     }
 }
-
