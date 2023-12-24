@@ -1,10 +1,7 @@
 package eu.scisneromam.gamebridge
 
 import eu.scisneromam.gamebridge.db.Chests
-import eu.scisneromam.gamebridge.json.Base
-import eu.scisneromam.gamebridge.json.ChestMessage
-import eu.scisneromam.gamebridge.json.ReceiveItemsMessage
-import eu.scisneromam.gamebridge.json.TopicsMessage
+import eu.scisneromam.gamebridge.json.*
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -36,11 +33,18 @@ object MQTTEventHandlers {
         }
         KSpigotMainInstance.getLogger().info("Received message on $topic:$payload [$baseMessage]")
         when (baseMessage.type.trim().lowercase()) {
+            MessageTypes.BACKEND_BOOT_TYPE -> {
+                GameBridge.backend_reboot = true
+                val sub1 = GameBridge.mqtt.unsubscribe(GameBridge.topics.receive)
+                val sub2 = GameBridge.mqtt.unsubscribe(GameBridge.topics.controlReceive)
+                GameBridge.instance.backendLogin()
+            }   
             MessageTypes.TOPICS -> {
                 val topicsMessage = GameBridge.json.decodeFromString<TopicsMessage>(payload)
                 if (topicsMessage.target == (KSpigotMainInstance as GameBridge).sender()) {
                     //the message is for us
                     GameBridge.topics = topicsMessage.topics
+                    GameBridge.backend_reboot = false
                     val sub1 = GameBridge.mqtt.subscribeWithResponse(GameBridge.topics.receive, onReceive)
                     val sub2 = GameBridge.mqtt.subscribeWithResponse(GameBridge.topics.controlReceive, onControlReceive)
                     KSpigotMainInstance.logger.info("${sub1.response}")

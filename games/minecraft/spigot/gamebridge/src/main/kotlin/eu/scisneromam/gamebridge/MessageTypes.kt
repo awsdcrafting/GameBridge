@@ -8,5 +8,6 @@ object MessageTypes
     const val TOPICS = "topics"
     const val REMOVE_CHEST = "remove_chest"
     const val SEND = "send"
+    const val BACKEND_BOOT_TYPE = "BACKEND_BOOT"
     
 }

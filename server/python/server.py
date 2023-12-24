@@ -240,6 +240,7 @@ def on_connect(client, userdata, flags, rc):
     # We subscribe to the global control send topic
     logging.info(f"Subscribing to {server.config.mqtt_global_control_topics}send")
     client.subscribe(server.config.mqtt_global_control_topics + "send")
+    client.publish(server.config.mqtt_global_control_topics + "receive", json.dumps({"type": "BACKEND_BOOT"}))
 
 
 # The callback for when a PUBLISH message is received from the server.

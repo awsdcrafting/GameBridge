@@ -39,7 +39,8 @@ class GameBridge : KSpigot() {
         lateinit var json: Json
         lateinit var topics: Topics
         lateinit var instance: GameBridge
-        fun isTopicsInitialized() = ::topics.isInitialized
+        var backend_reboot: Boolean = false
+        fun isTopicsInitialized() = ::topics.isInitialized && !backend_reboot
     }
     
     fun sender(): List<String> = config.get("sender_path") as List<String>
@@ -101,6 +102,10 @@ class GameBridge : KSpigot() {
         KSpigotMainInstance.getLogger().info("Mqtt status ${mqtt.isConnected}")
         //val response = mqtt.subscribeWithResponse("#") { topic, message -> KSpigotMainInstance.logger.info("Received message on $topic:${message.payload.decodeToString()} ") }
         //KSpigotMainInstance.logger.info("${response} ${response.response} ${response.isComplete}")
+       
+    }
+    
+    fun backendLogin() {
         mqtt.publish("${config.get("mqtt.global_control_topic")}send", MqttMessage(GameBridge.json.encodeToString<LoginMessage>(LoginMessage(sender())).toByteArray(Charsets.UTF_8)))
     }
     
