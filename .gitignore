@@ -631,6 +631,5 @@ gradle-app.setting
 hs_err_pid*
 replay_pid*
 
-games/factorio/gamebridge
 .vscode/settings.json
 games/factorio/.vscode/settings.json
