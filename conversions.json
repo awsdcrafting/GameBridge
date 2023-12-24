@@ -1,8 +1,8 @@
 {
     "factorio<->minecraft": {
         "default_conversion": {
-            "input_count": 100,
-            "output_count": 1
+            "item_input_count": 100,
+            "item_output_count": 1
         },
         "items": {
             "iron-plate": {
@@ -24,8 +24,8 @@
     },
     "minecraft->factorio": {
         "default_conversion": {
-            "input_count": 1,
-            "output_count": 100
+            "item_input_count": 1,
+            "item_output_count": 100
         },
         "items": {
             "minecraft:iron_block": {
