@@ -308,6 +308,7 @@ class GameBridge : KSpigot() {
                 Constants.CHEST_TYPE_RECEIVER -> {
                     chest.persistentDataContainer.set(GameBridge.chestTypeKey, PersistentDataType.STRING, Constants.CHEST_TYPE_RECEIVER)
                     chest.persistentDataContainer.set(GameBridge.chestIDKey, PersistentDataType.STRING, id)
+                    chest.update()
                     KSpigotMainInstance.getLogger().info("$chest is now a receiver chest with id $id")
                     Database.addChest(placedAgainst)
                     if (isTopicsInitialized()) {
