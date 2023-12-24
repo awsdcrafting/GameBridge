@@ -38,6 +38,7 @@ class GameBridge : KSpigot() {
         lateinit var mqtt: MqttClient
         lateinit var json: Json
         lateinit var topics: Topics
+        lateinit var instance: GameBridge
         fun isTopicsInitialized() = ::topics.isInitialized
     }
     
@@ -55,6 +56,7 @@ class GameBridge : KSpigot() {
         reloadConfig()
         defaultConfig()
         saveConfig()
+        instance = this
     }
     
     private fun defaultConfig() {
@@ -112,7 +114,7 @@ class GameBridge : KSpigot() {
         val toSend = inventory.filter { it?.itemMeta?.persistentDataContainer?.has(GameBridge.itemTypeKey) == true }
         val map = HashMap<String, Int>()
         for (itemStack in toSend) {
-            map.compute(itemStack.type.name) { _, amount ->
+            map.compute(itemStack.type.key.toString()) { _, amount ->
                 if (amount == null) {
                     itemStack.amount
                 }

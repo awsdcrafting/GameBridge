@@ -57,8 +57,8 @@ def on_message(client, config2: Config, msg):
         client.subscribe(config.mqtt_topics["receive"])
     elif m_type == "send":
         print("send")
-        #parse items
-        pass
+        config.items = {"items": json_dict["items"], "chest_id": json_dict["receiver"]}
+        #TODO add items instead of replace
     else:
         print("Sth else")
     
@@ -94,9 +94,8 @@ def main():
 
     chests = set()
     while True:
-        print(f"{config=}")
+        time.sleep(1)
         if not config.mqtt_topics:
-            time.sleep(1)
             continue
         try:
             resp = client.send_command("/scis_gamebridge.get_chests")
@@ -128,12 +127,12 @@ def main():
             if config.items:
                 items = config.items
                 config.items = {}
+                print(f"Adding {items}: {json.dumps(items)}")
                 resp = client.send_command("/scis_gamebridge.add_items " + json.dumps(items))
                 respdict = json.loads(resp)
                 print(f"added: {resp}")
             
             sys.stdout.flush()
-            time.sleep(1)
         except Exception as ex:
             print(ex)
     return

@@ -59,9 +59,9 @@ class Chest():
         return (ret_items, rejected_items)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Game():
-    sender: list[str]
+    sender:list[str] = field(init=True, hash=False)
     path: str
     topic_prefix: InitVar[str]
     chests: Dict[str, Chest] = field(default_factory=lambda: {}, hash=False, compare=False)
@@ -75,12 +75,12 @@ class Game():
 
     def add_chest(self, chest: Chest):
         self.chests[chest.id] = chest
-        logging.info("Added chest with id: {chest.id} to game {self.path}")
+        logging.info(f"Added chest with id: {chest.id} to game {self}")
 
     def remove_chest(self, id):
         if id in self.chests:
             del self.chests[id]
-        logging.info("Removed chest with id: {id} from game {self.path}")
+        logging.info(f"Removed chest with id: {id} from game {self}")
         
     def add_items(self, id, items: Dict):
         if id not in self.chests:
@@ -128,11 +128,11 @@ class Server():
     def add_chest(self, path, obj):
         game = self.get_game_by_topic(path)
         if not game:
-            logging.info("unknown game: [{path}]: {obj}")
+            logging.info(f"unknown game: [{path}]: {obj} {self.games}")
             return
 
         if "chest_id" not in obj:
-            logging.info("Invalid chest: [{path}]: {obj}")
+            logging.info(f"Invalid chest: [{path}]: {obj}")
             return
         chest_id = obj["chest_id"]
         whitelist = []
@@ -151,7 +151,7 @@ class Server():
             return
 
         if "chest_id" not in obj:
-            logging.info("Invalid chest: [{path}]: {obj}")
+            logging.info(f"Invalid chest: [{path}]: {obj}")
             return
         chest_id = obj["chest_id"]
         game.remove_chest(chest_id)
@@ -165,21 +165,26 @@ class Server():
         for path in origin.sender:
             if path not in bases[-1]:
                 break
-            bases += bases[-1][path]
+            bases += [bases[-1][path]]
+        bases = bases[1:] #remove the conversion list
+        logging.info(f"Converting {item} from {origin.path} to {target.path} via {bases}")
         
         while bases:
             current_bases = [bases[-1]]
+            logging.info(f"Converting {item} from {origin.path} to {target.path} via {current_bases}")
             
             # traverse the target path    
             for path in target.sender:
                 if path not in current_bases[-1]:
                     break
-                current_bases += current_bases[-1][path]
-                
+                current_bases += [current_bases[-1][path]]
+
+            logging.info(f"Converting {item} from {origin.path} to {target.path} via {current_bases}")
             while current_bases:
                 #if conversion: return it
                 if item in current_bases[-1]:
-                    return current_bases[item]
+                    logging.info(f"Found Conversion for {item} with {current_bases[-1][item]}")
+                    return current_bases[-1][item]
                 
                 #go up one
                 current_bases = current_bases[:-1]
@@ -188,34 +193,41 @@ class Server():
             bases = bases[:-1]
             
         #if not found return item
-        return {"output_item": item}
+        logging.warning(f"No Conversion for {item}")
+        return {"output_name": item}
         
     def add_items(self, id, items, origin: Game):
         games = [game for game in self.games.values() if id in game.chests]
         items_per_game = {game: {} for game in games}
         converted_items_per_game = {game: {} for game in games}
-        
+
+        logging.info(f"preparing to send {items} from {origin.path} to chest {id}")
+
         for item, amount in items.items():
             valid_games = []
             for game in games:
+                if game == origin:
+                    continue
                 converted_item_info = self.convert_item(item, origin, game)
                 if not game.is_valid_item(id, converted_item_info["output_name"]):
                     continue
                 valid_games += [game]
-                items_per_game[game][item] = {"amount": amount * converted_item_info.get("output_count", 1) / converted_item_info.get("input_count"), "item": converted_item_info.get("output_name", item)}
+                items_per_game[game][item] = {"amount": amount * converted_item_info.get("output_count", 1) / converted_item_info.get("input_count", 1), "item": converted_item_info.get("output_name", item)}
 
             for game in valid_games:
                 amount = items_per_game[game][item]["amount"] / len(valid_games)
                 converted = items_per_game[game][item]["item"]
                 del items_per_game[game][item]
                 converted_items_per_game[game][converted] = amount
-            
-        # send items
-        for game, items in converted_items_per_game.items():
-            logging.info("sending {items} to {game}")
-            send_obj = {"sender": origin.sender, "target": game.sender, "receiver": id, "items": items, "type": "send"}
-            self.mqtt_client.publish(game.topics["receive"], json.dumps(send_obj))
 
+        for game, items in converted_items_per_game.items():
+            if not items:
+                continue
+            send, rejected = game.add_items(id, items)
+            #TODO rejected
+            logging.info(f"sending {items} to {game}")
+            send_obj = {"sender": origin.sender, "target": game.sender, "receiver": id, "items": send, "type": "send"}
+            self.mqtt_client.publish(game.topics["receive"], json.dumps(send_obj))
 
 # The callback for when the client receives a CONNACK response from the server.
 
@@ -250,10 +262,10 @@ def on_message(client, server: Server, msg: mqtt.MQTTMessage):
     elif msg.topic.startswith(server.config.mqtt_client_topics):
         sub_topic = msg.topic.removeprefix(server.config.mqtt_client_topics)
         if sub_topic.startswith("control/send/"):
-            path = sub_topic.removeprefix("control/send")
+            path = sub_topic.removeprefix("control/send/")
             game = server.get_game_by_topic(path)
             if game == None:
-                logging.warn(f"Unknown game: {path} with: [{msg.topic}]: {msg.payload}")
+                logging.warning(f"Unknown game: {path} with: [{msg.topic}]: {msg.payload}")
                 #request game again, why are we even subscribed to this??
                 return
             obj = json.loads(msg.payload.decode("utf-8"))
@@ -298,6 +310,7 @@ if __name__ == "__main__":
     server = Server(Config(), client)
     with open('item_conversions.json') as item_conversions_file:
         server.conversion = json.load(item_conversions_file)
+        logging.info(f"Loaded conversion: {server.conversion}")
     client.user_data_set(server)
 
     logging.info(Server)

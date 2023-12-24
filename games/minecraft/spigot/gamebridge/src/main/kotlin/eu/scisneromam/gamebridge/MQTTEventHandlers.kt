@@ -1,15 +1,19 @@
 package eu.scisneromam.gamebridge
 
 import eu.scisneromam.gamebridge.json.Base
+import eu.scisneromam.gamebridge.json.ChestMessage
 import eu.scisneromam.gamebridge.json.ReceiveItemsMessage
 import eu.scisneromam.gamebridge.json.TopicsMessage
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import net.axay.kspigot.items.itemStack
 import net.axay.kspigot.main.KSpigotMainInstance
 import org.bukkit.Material
 import org.bukkit.block.Chest
 import org.bukkit.inventory.ItemStack
+import org.bukkit.persistence.PersistentDataType
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener
+import org.eclipse.paho.client.mqttv3.MqttMessage
 import java.lang.Exception
 
 
@@ -33,6 +37,21 @@ object MQTTEventHandlers {
                     GameBridge.topics = topicsMessage.topics
                     GameBridge.mqtt.subscribe(GameBridge.topics.receive, onReceive)
                     GameBridge.mqtt.subscribe(GameBridge.topics.controlReceive, onControlReceive)
+                    
+                    Database.getChests().forEach {
+                        val chest = it.state
+                        if (chest !is Chest) {
+                            Database.removeChest(it)
+                            return@forEach
+                        }
+                        val type: String = chest.persistentDataContainer.get(GameBridge.chestTypeKey, PersistentDataType.STRING) ?: return@forEach
+                        val id: String = chest.persistentDataContainer.get(GameBridge.chestIDKey, PersistentDataType.STRING) ?: return@forEach
+                        if (type != Constants.CHEST_TYPE_RECEIVER)
+                        {
+                            return@forEach
+                        }
+                        GameBridge.mqtt.publish(GameBridge.topics.controlSend, MqttMessage(GameBridge.json.encodeToString<ChestMessage>(ChestMessage(id, GameBridge.instance.sender())).toByteArray()))
+                    }
                 }
             }
         }
@@ -40,12 +59,14 @@ object MQTTEventHandlers {
     
     val onReceive = IMqttMessageListener { topic, message ->
         val payload = message.payload.decodeToString()
+        KSpigotMainInstance.getLogger().info("Received message on $topic:$payload")
         val baseMessage = try {
             GameBridge.json.decodeFromString<Base>(payload)
         }
         catch (_: Exception) {
             return@IMqttMessageListener
         }
+        KSpigotMainInstance.getLogger().info("Received message on $topic:$payload [$baseMessage]")
         when (baseMessage.type.trim().lowercase()) {
             MessageTypes.SEND -> {
                 val receiveMessage = GameBridge.json.decodeFromString<ReceiveItemsMessage>(message.payload.decodeToString())
@@ -53,7 +74,7 @@ object MQTTEventHandlers {
                 val chests = chestBlocks.map { it.state as Chest }
                 //TODO überflüssige items zurückschicken etc //blaclist etc
                 for ((itemName, amount) in receiveMessage.items) {
-                    val mat = Material.getMaterial(itemName) ?: continue
+                    val mat = Material.matchMaterial(itemName) ?: continue
                     //TODO reject
                     val item = itemStack(mat) {
                         this.amount = amount / chests.size
@@ -70,7 +91,7 @@ object MQTTEventHandlers {
                         }
                     }
                     while(overflow.isNotEmpty() && fillAble.isNotEmpty()) {
-
+                        break
                     }
                 }
                 chests.forEach { it.update() }

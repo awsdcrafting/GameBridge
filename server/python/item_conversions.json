@@ -4,13 +4,13 @@
             "iron-plate": {
                 "input_count": 100,
                 "output_count": 1,
-                "output_name": "minecraft.iron-ingot"
+                "output_name": "minecraft:iron_ingot"
             }
         }
     },
     "minecraft": {
         "factorio": {
-            "minecraft.iron-ingot": {
+            "minecraft:iron_ingot": {
                 "input_count": 1,
                 "output_count": 100,
                 "output_name": "iron-plate"
