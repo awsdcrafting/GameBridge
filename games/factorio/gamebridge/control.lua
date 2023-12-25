@@ -85,11 +85,11 @@ end
 
 local function initialize()
     --setup global table
-    global.guis = {}
-    global.items_to_insert = {}
-    global.sender_chests = {} --table from id to LuaEntity
-    global.receiver_chests = {} --table from id to LuaEntity
-    global.chest_data = {} --table from LuaEntity to data (id, type)
+    global.guis = global.guis or {}
+    global.items_to_insert = global.items_to_insert or {}
+    global.sender_chests = global.sender_chests or {} --table from id to LuaEntity
+    global.receiver_chests = global.receiver_chests or {} --table from id to LuaEntity
+    global.chest_data = global.chest_data or {} --table from LuaEntity to data (id, type)
 end
 
 script.on_load(function()

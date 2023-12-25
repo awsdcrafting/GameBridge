@@ -116,7 +116,6 @@ function gui.on_gui_switch_state_changed(self, e)
 
     local data = global.chest_data[index] or {}
     local old_type = data.chest_type
-    data.chest = chest
     data.chest_type = chest_type
     global.chest_data[index] = data
     set_chest(index, data, {["chest_type"] = old_type})
@@ -148,7 +147,6 @@ function gui.on_textfield_confirmed(self, e)
 
     local data = global.chest_data[index] or {}
     local old_id = data.chest_id
-    data.chest = chest
     data.chest_id = chest_id
     global.chest_data[index] = data
 
@@ -217,12 +215,13 @@ end)
 
 script.on_event(defines.events.on_gui_opened, function (e)
     local player = game.get_player(e.player_index)
-    if not e.gui_type == defines.gui_type.entity then
+    if e.gui_type ~= defines.gui_type.entity then
         return
     end
     if not player.opened then
         return
     end
+
     local chest = player.opened
     local index = chest_to_index(chest)
     local data = global.chest_data[index] or {}
