@@ -20,6 +20,7 @@ class Config():
     mqtt_pass: str = ""
     mqtt_global_control_topics: str = "gamebridge/control/"
     sender: list[str] = field(default_factory=lambda: ["factorio", "vanilla", "test"])
+    qos: int = 0
     
     mqtt_topics:dict = field(default_factory=lambda: {})
     items:dict = field(default_factory=lambda: {})
@@ -66,7 +67,7 @@ def on_message(client, config2: Config, msg):
         
         client.unsubscribe(config.mqtt_topics["control_receive"])
         client.unsubscribe(config.mqtt_topics["receive"])
-        client.publish(f"{config.mqtt_global_control_topics}send", json.dumps(login))
+        client.publish(f"{config.mqtt_global_control_topics}send", json.dumps(login), qos=config.qos)
     
     if target != config.sender:
         print("wrong target")
@@ -75,8 +76,8 @@ def on_message(client, config2: Config, msg):
     if m_type == "topics":
         print("topics")
         config.mqtt_topics = json_dict["topics"]
-        client.subscribe(config.mqtt_topics["control_receive"])
-        client.subscribe(config.mqtt_topics["receive"])
+        client.subscribe(config.mqtt_topics["control_receive"], qos=config.qos)
+        client.subscribe(config.mqtt_topics["receive"], qos=config.qos)
     elif m_type == "send":
         print("send")
         chest_id = json_dict["receiver"]
@@ -96,37 +97,39 @@ def main():
     config = Config()
     
     client = factorio_rcon.RCONClient(config.rcon_server, config.rcon_port, config.rcon_password)
-
+    client.connect()
+    
     mqttclient = mqtt.Client()
     mqttclient.on_connect = on_connect
     mqttclient.on_message = on_message
     mqttclient.user_data_set(config)
-    mqttclient.will_set(f"{config.mqtt_global_control_topics}send", {"type": "logout", "sender": config.sender})
+    #mqttclient.will_set(f"{config.mqtt_global_control_topics}send", json.dumps({"type": "logout", "sender": config.sender}))
 
     mqttclient.username_pw_set(username=config.mqtt_user, password=config.mqtt_pass)
 
     mqttclient.connect(config.mqtt_server, config.mqtt_port, 60)
 
-    mqttclient.subscribe(f"{config.mqtt_global_control_topics}receive")
+    mqttclient.subscribe(f"{config.mqtt_global_control_topics}receive", qos=config.qos)
 
     login = {
         "type": "login",
         "sender": config.sender,
     }
-    mqttclient.publish(f"{config.mqtt_global_control_topics}send", json.dumps(login))
+    mqttclient.publish(f"{config.mqtt_global_control_topics}send", json.dumps(login), qos=config.qos)
     
     mqttclient.loop_start()
-    do_reconnect = True
+    do_reconnect = False
     while True:
         time.sleep(1)
         if not config.mqtt_topics:
             continue
         try:
             if do_reconnect:
-                client.connect()
                 do_reconnect = False
+                client.connect()
+            logging.debug("Sending /scis_gamebridge.get_chests")
             resp = client.send_command("/scis_gamebridge.get_chests")
-
+            logging.debug(f"chest: {resp=}")
             respdict = json.loads(resp)
             new_chests = set()
             for chest, data in respdict.items():
@@ -138,18 +141,19 @@ def main():
             removed_chests = [chest for chest in config.chests if chest not in new_chests]
             added_chests = [chest for chest in new_chests if chest not in config.chests]
             for chest in removed_chests:
-                mqttclient.publish(config.mqtt_topics["control_send"], json.dumps({"type": "remove_chest", "chest_id": chest, "sender": config.sender}))
+                mqttclient.publish(config.mqtt_topics["control_send"], json.dumps({"type": "remove_chest", "chest_id": chest, "sender": config.sender}), qos=config.qos)
             for chest in added_chests:
-                mqttclient.publish(config.mqtt_topics["control_send"], json.dumps({"type": "chest", "chest_id": chest, "sender": config.sender}))
+                mqttclient.publish(config.mqtt_topics["control_send"], json.dumps({"type": "chest", "chest_id": chest, "sender": config.sender}), qos=config.qos)
                 
             config.chests = new_chests
 
             resp = client.send_command("/scis_gamebridge.get_items")
+            logging.debug(f"items: {resp=}")
             respdict = json.loads(resp)
             for chest_id, items in respdict.items():
                 if not items:
                     continue
-                mqttclient.publish(config.mqtt_topics["send"], json.dumps({"type": "send", "sender": config.sender, "receiver": chest_id, "items": items}))
+                mqttclient.publish(config.mqtt_topics["send"], json.dumps({"type": "send", "sender": config.sender, "receiver": chest_id, "items": items}), qos=config.qos)
 
             if config.items:
                 items = config.items
@@ -183,5 +187,5 @@ def getPlayerCount():
 
     return
 if __name__ == "__main__":
-    logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", level=logging.INFO)
+    logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", level=logging.DEBUG)
     main()

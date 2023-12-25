@@ -9,7 +9,7 @@
             "iron-ore": {
                 "input_count": 100,
                 "output_count": 1,
-                "output_name": "minecraft:iron_ore"
+                "output_name": "minecraft:raw_iron"
             },
             "copper-plate": {
                 "input_count": 100,
@@ -19,7 +19,7 @@
             "copper-ore": {
                 "input_count": 100,
                 "output_count": 1,
-                "output_name": "minecraft:copper_ore"
+                "output_name": "minecraft:raw_copper"
             },
             "coal": {
                 "input_count": 100,
@@ -45,7 +45,7 @@
                 "output_count": 100,
                 "output_name": "iron-plate"
             },
-            "minecraft:iron_ore": {
+            "minecraft:raw_iron": {
                 "input_count": 1,
                 "output_count": 100,
                 "output_name": "iron-ore"
@@ -55,7 +55,7 @@
                 "output_count": 100,
                 "output_name": "copper-plate"
             },
-            "minecraft:copper_ore": {
+            "minecraft:raw_copper": {
                 "input_count": 1,
                 "output_count": 100,
                 "output_name": "copper-ore"
@@ -64,6 +64,11 @@
                 "input_count": 1,
                 "output_count": 100,
                 "output_name": "coal"
+            },
+            "minecraft:dirt": {
+                "input_count": 64,
+                "output_count": 1,
+                "output_name": "landfill"
             },
             "minecraft:iron_block": {
                 "input_count": 1,

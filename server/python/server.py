@@ -36,6 +36,8 @@ class Chest():
     items: Dict[str, float] = field(default_factory=lambda: {})
 
     def is_valid_item(self, item):
+        if not item:
+            return False
         if self.whitelist and item not in self.whitelist:
             return False
         if self.blacklist and item in self.blacklist:
@@ -194,7 +196,7 @@ class Server():
             
         #if not found return item
         logging.debug(f"No Conversion for {item}")
-        return {"output_name": item}
+        return {"output_name": None}
         
     def add_items(self, id, items, origin: Game):
         games = [game for game in self.games.values() if id in game.chests]

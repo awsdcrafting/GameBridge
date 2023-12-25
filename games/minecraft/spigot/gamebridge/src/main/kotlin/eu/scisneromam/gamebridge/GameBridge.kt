@@ -102,7 +102,7 @@ class GameBridge : KSpigot() {
         KSpigotMainInstance.getLogger().info("Mqtt status ${mqtt.isConnected}")
         //val response = mqtt.subscribeWithResponse("#") { topic, message -> KSpigotMainInstance.logger.info("Received message on $topic:${message.payload.decodeToString()} ") }
         //KSpigotMainInstance.logger.info("${response} ${response.response} ${response.isComplete}")
-       
+       backendLogin()
     }
     
     fun backendLogin() {
