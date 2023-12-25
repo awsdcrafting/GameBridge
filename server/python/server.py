@@ -128,11 +128,11 @@ class Server():
     def add_chest(self, path, obj):
         game = self.get_game_by_topic(path)
         if not game:
-            logging.info(f"unknown game: [{path}]: {obj} {self.games}")
+            logging.warning(f"unknown game: [{path}]: {obj} {self.games}")
             return
 
         if "chest_id" not in obj:
-            logging.info(f"Invalid chest: [{path}]: {obj}")
+            logging.warning(f"Invalid chest: [{path}]: {obj}")
             return
         chest_id = obj["chest_id"]
         whitelist = []
@@ -167,11 +167,11 @@ class Server():
                 break
             bases += [bases[-1][path]]
         bases = bases[1:] #remove the conversion list
-        logging.info(f"Converting {item} from {origin.path} to {target.path} via {bases}")
+        logging.debug(f"Converting {item} from {origin.path} to {target.path} via {bases}")
         
         while bases:
             current_bases = [bases[-1]]
-            logging.info(f"Converting {item} from {origin.path} to {target.path} via {current_bases}")
+            logging.debug(f"Converting {item} from {origin.path} to {target.path} via {current_bases}")
             
             # traverse the target path    
             for path in target.sender:
@@ -179,11 +179,11 @@ class Server():
                     break
                 current_bases += [current_bases[-1][path]]
 
-            logging.info(f"Converting {item} from {origin.path} to {target.path} via {current_bases}")
+            logging.debug(f"Converting {item} from {origin.path} to {target.path} via {current_bases}")
             while current_bases:
                 #if conversion: return it
                 if item in current_bases[-1]:
-                    logging.info(f"Found Conversion for {item} with {current_bases[-1][item]}")
+                    logging.debug(f"Found Conversion for {item} with {current_bases[-1][item]}")
                     return current_bases[-1][item]
                 
                 #go up one
@@ -193,7 +193,7 @@ class Server():
             bases = bases[:-1]
             
         #if not found return item
-        logging.warning(f"No Conversion for {item}")
+        logging.debug(f"No Conversion for {item}")
         return {"output_name": item}
         
     def add_items(self, id, items, origin: Game):
@@ -201,7 +201,7 @@ class Server():
         items_per_game = {game: {} for game in games}
         converted_items_per_game = {game: {} for game in games}
 
-        logging.info(f"preparing to send {items} from {origin.path} to chest {id}")
+        logging.debug(f"preparing to send {items} from {origin.path} to chest {id}")
 
         for item, amount in items.items():
             valid_games = []
@@ -247,9 +247,9 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, server: Server, msg: mqtt.MQTTMessage):
-    logging.info(f"Received [{msg.topic}]: {msg.payload}")
+    logging.debug(f"Received [{msg.topic}]: {msg.payload}")
     if msg.topic == f"{server.config.mqtt_global_control_topics}send":
-        logging.info(f"payload: {msg.payload.decode('utf-8')}")
+        logging.debug(f"payload: {msg.payload.decode('utf-8')}")
         obj = json.loads(msg.payload.decode("utf-8"))
         if "type" not in obj:
             #wrong object
@@ -285,7 +285,7 @@ def on_message(client, server: Server, msg: mqtt.MQTTMessage):
             path = sub_topic.removeprefix("send/")
             game = server.get_game_by_topic(path)
             if not game:
-                logging.warn(f"received for unknown game: [{msg.topic}]: {msg.payload}")
+                logging.warning(f"received for unknown game: [{msg.topic}]: {msg.payload}")
                 return
             if "receiver" not in obj:
                 logging.info(f"Invalid send data: [{msg.topic}]: {msg.payload}")
@@ -305,7 +305,7 @@ def on_message(client, server: Server, msg: mqtt.MQTTMessage):
 
 if __name__ == "__main__":
     load_dotenv()
-    logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", level=logging.DEBUG)
+    logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", level=logging.INFO)
 
     client = mqtt.Client()
     server = Server(Config(), client)

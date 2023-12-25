@@ -5,6 +5,7 @@ import json
 import paho.mqtt.client as mqtt
 import dotenv
 import os
+import logging
 
 from dataclasses import dataclass, field
 
@@ -95,8 +96,6 @@ def main():
     config = Config()
     
     client = factorio_rcon.RCONClient(config.rcon_server, config.rcon_port, config.rcon_password)
-    client.connect()
-
 
     mqttclient = mqtt.Client()
     mqttclient.on_connect = on_connect
@@ -117,18 +116,21 @@ def main():
     mqttclient.publish(f"{config.mqtt_global_control_topics}send", json.dumps(login))
     
     mqttclient.loop_start()
-
+    do_reconnect = True
     while True:
         time.sleep(1)
         if not config.mqtt_topics:
             continue
         try:
+            if do_reconnect:
+                client.connect()
+                do_reconnect = False
             resp = client.send_command("/scis_gamebridge.get_chests")
 
             respdict = json.loads(resp)
             new_chests = set()
             for chest, data in respdict.items():
-                print(f"{chest=} {data=}")
+                logging.debug(f"{chest=} {data=}")
                 if data["chest_type"] != "receiver":
                     continue
                 new_chests.add(data["chest_id"])
@@ -152,20 +154,34 @@ def main():
             if config.items:
                 items = config.items
                 config.items = {}
-                print(f"Adding {items}")
+                logging.debug(f"Adding {items}")
                 for chest, game_items in items.items():
                     json_items = {"items": game_items, "chest_id": chest}
                     resp = client.send_command("/scis_gamebridge.add_items " + json.dumps(json_items))
                     respdict = json.loads(resp)
-                    print(f"added: {resp}")
+                    logging.debug(f"added: {resp}")
             
             sys.stdout.flush()
+        except factorio_rcon.RCONClosed as ex:
+            logging.warning(ex)
+            time.sleep(5)
+            do_reconnect = True
+        except factorio_rcon.RCONNotConnected as ex:
+            logging.warning(ex)
+            time.sleep(5)
+            do_reconnect = True
+        except factorio_rcon.RCONConnectError as ex:
+            logging.warning(ex)
+            time.sleep(10)
+            do_reconnect = True
         except Exception as ex:
-            print(ex)
+            logging.warning(ex)
+            
     return
 
 def getPlayerCount():
 
     return
 if __name__ == "__main__":
+    logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", level=logging.INFO)
     main()
