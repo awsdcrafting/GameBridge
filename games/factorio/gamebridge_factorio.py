@@ -160,7 +160,9 @@ def main():
                 config.items = {}
                 logging.debug(f"Adding {items}")
                 for chest, game_items in items.items():
+                    game_items = {key: value for key, value in game_items.items() if key and value and value > 0}
                     json_items = {"items": game_items, "chest_id": chest}
+                    logging.debug(f"trying adding {chest}: {game_items}")
                     resp = client.send_command("/scis_gamebridge.add_items " + json.dumps(json_items))
                     respdict = json.loads(resp)
                     if respdict:

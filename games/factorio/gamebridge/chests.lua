@@ -67,10 +67,18 @@ local function add_item_to_chests(chest_id, items)
         end
         for item, count in pairs(items) do
             local actual_count = math.floor(count / chest_count)
+            if actual_count <= 0 then
+                goto continue_item
+            end
+            if not game.item_prototypes[item] then
+                goto continue_item
+            end
             local inserted = inventory.insert({ name = item, count = actual_count })
             --TODO handle overflow
             local pre_overflow = overflow[item] or 0
             overflow[item] = (actual_count - inserted) + pre_overflow
+
+            ::continue_item::
         end
         ::continue::
     end
