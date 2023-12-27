@@ -127,6 +127,12 @@ def main():
             if do_reconnect:
                 do_reconnect = False
                 client.connect()
+            resp = client.send_command("/p o") #online players
+            if resp.strip() == "Online players (0):":
+                time.sleep(60*5) # 5 min sleep
+                continue
+
+            
             logging.debug("Sending /scis_gamebridge.get_chests")
             resp = client.send_command("/scis_gamebridge.get_chests")
             logging.debug(f"chest: {resp=}")
@@ -134,6 +140,12 @@ def main():
             new_chests = set()
             for chest, data in respdict.items():
                 logging.debug(f"{chest=} {data=}")
+                if not chest:
+                    continue
+                if "chest_id" not in data:
+                    continue
+                if "chest_type" not in data:
+                    continue
                 if data["chest_type"] != "receiver":
                     continue
                 new_chests.add(data["chest_id"])
