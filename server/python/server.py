@@ -19,6 +19,8 @@ class Config():
     mqtt_global_control_topics: str = "gamebridge/control/"
     mqtt_client_topics: str = "gamebridge/game/"
 
+    qos: int = 0
+
     def __init__(self) -> None:
         self.mqtt_server = os.getenv("MQTT_SERVER", self.mqtt_server)
         self.mqtt_port = int(os.getenv("MQTT_PORT", self.mqtt_port))
@@ -110,8 +112,8 @@ class Server():
         ret = {"target": sender, "topics": game.topics, "type": "topics"}
         logging.info(f"Connected game at {path}: {game}")
         #subsrcibe to the send topics
-        self.mqtt_client.subscribe([(topic, 0) for topic_key, topic in game.topics.items() if "send" in topic_key])
-        self.mqtt_client.publish(server.config.mqtt_global_control_topics + "receive", json.dumps(ret))
+        self.mqtt_client.subscribe([(topic, 0) for topic_key, topic in game.topics.items() if "send" in topic_key], qos=self.config.qos)
+        self.mqtt_client.publish(server.config.mqtt_global_control_topics + "receive", json.dumps(ret), qos=self.config.qos)
 
     def logout(self, obj):
         sender = obj["sender"]
@@ -229,7 +231,7 @@ class Server():
             #TODO rejected
             logging.info(f"sending {items} to {game}")
             send_obj = {"sender": origin.sender, "target": game.sender, "receiver": id, "items": send, "type": "send"}
-            self.mqtt_client.publish(game.topics["receive"], json.dumps(send_obj))
+            self.mqtt_client.publish(game.topics["receive"], json.dumps(send_obj), qos=self.config.qos)
 
 # The callback for when the client receives a CONNACK response from the server.
 
@@ -241,8 +243,8 @@ def on_connect(client, userdata, flags, rc):
     # reconnect then subscriptions will be renewed.
     # We subscribe to the global control send topic
     logging.info(f"Subscribing to {server.config.mqtt_global_control_topics}send")
-    client.subscribe(server.config.mqtt_global_control_topics + "send")
-    client.publish(server.config.mqtt_global_control_topics + "receive", json.dumps({"type": "BACKEND_BOOT"}))
+    client.subscribe(server.config.mqtt_global_control_topics + "send", qos=userdata.config.qos)
+    client.publish(server.config.mqtt_global_control_topics + "receive", json.dumps({"type": "BACKEND_BOOT"}), qos=userdata.config.qos)
 
 
 # The callback for when a PUBLISH message is received from the server.
