@@ -91,6 +91,9 @@ object MQTTEventHandlers {
                     val chests = chestBlocks.map { it.state as Chest }
                     KSpigotMainInstance.getLogger().info("Found $chests with id ${receiveMessage.receiver}")
                     //TODO überflüssige items zurückschicken etc //blaclist etc
+                    
+                    
+                    
                     val items = receiveMessage.items.map { 
                         val mat = Material.matchMaterial(it.key) ?: return@map null
                         itemStack(mat) { this.amount = it.value / chests.size } 
@@ -118,6 +121,19 @@ object MQTTEventHandlers {
                         }
                         fillAble = newFillable
                         overflow = newOverflow
+                    }
+                    //items which cannot be split on all chests
+                    var singleItems = receiveMessage.items.filter {
+                        it.value < chests.size
+                    }.map {
+                        val mat = Material.matchMaterial(it.key) ?: return@map null
+                        itemStack(mat) { this.amount = it.value }
+                    }.filterNotNull().toTypedArray()
+                    var aroverflow = singleItems
+                    while (fillAble.isNotEmpty() && aroverflow.isNotEmpty())
+                    {
+                        val chest = fillAble.removeFirst()
+                        aroverflow = chest.blockInventory.addItem(*singleItems).values.toTypedArray()
                     }
                 }
             }
