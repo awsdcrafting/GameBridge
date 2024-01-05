@@ -133,7 +133,7 @@ object MQTTEventHandlers {
                     while (fillAble.isNotEmpty() && aroverflow.isNotEmpty())
                     {
                         val chest = fillAble.removeFirst()
-                        aroverflow = chest.blockInventory.addItem(*singleItems).values.toTypedArray()
+                        aroverflow = chest.blockInventory.addItem(*aroverflow).values.toTypedArray()
                     }
                 }
             }
